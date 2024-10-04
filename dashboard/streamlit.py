@@ -5,10 +5,10 @@ import numpy as np
 import seaborn as sns
 
 # Notebook code
-dfOrderItems = pd.read_csv("order_items_dataset.csv", delimiter=",")
-dfOrderReviews = pd.read_csv("order_reviews_dataset.csv", delimiter=",")
-dfOrders = pd.read_csv("orders_dataset.csv", delimiter=",")
-dfProducts = pd.read_csv("products_dataset.csv", delimiter=",")
+dfOrderItems = pd.read_csv("/dashboard/order_items_dataset.csv", delimiter=",")
+dfOrderReviews = pd.read_csv("/dashboard/order_reviews_dataset.csv", delimiter=",")
+dfOrders = pd.read_csv("/dashboard/orders_dataset.csv", delimiter=",")
+dfProducts = pd.read_csv("/dashboard/products_dataset.csv", delimiter=",")
 
 dfProducts.rename(columns={
     'product_name_lenght': 'product_name_length',
