@@ -4,46 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-# Notebook code
-dfOrderItems = pd.read_csv("data/order_items_dataset.csv", delimiter=",")
-dfOrderReviews = pd.read_csv("data/order_reviews_dataset.csv", delimiter=",")
-dfOrders = pd.read_csv("data/orders_dataset.csv", delimiter=",")
-dfProducts = pd.read_csv("data/products_dataset.csv", delimiter=",")
-
-dfProducts.rename(columns={
-    'product_name_lenght': 'product_name_length',
-    'product_description_lenght': 'product_description_length'
-}, inplace=True)
-dfOrderItems["shipping_limit_date"] = pd.to_datetime(dfOrderItems["shipping_limit_date"])
-dfOrderReviews["review_creation_date"] = pd.to_datetime(dfOrderReviews["review_creation_date"])
-dfOrderReviews["review_answer_timestamp"] = pd.to_datetime(dfOrderReviews["review_answer_timestamp"])
-dfOrders["order_purchase_timestamp"] = pd.to_datetime(dfOrders["order_purchase_timestamp"])
-dfOrders["order_approved_at"] = pd.to_datetime(dfOrders["order_approved_at"])
-dfOrders["order_delivered_carrier_date"] = pd.to_datetime(dfOrders["order_delivered_carrier_date"])
-dfOrders["order_delivered_customer_date"] = pd.to_datetime(dfOrders["order_delivered_customer_date"])
-dfOrders["order_estimated_delivery_date"] = pd.to_datetime(dfOrders["order_estimated_delivery_date"])
-dfProducts["product_name_length"] = dfProducts["product_name_length"].fillna(0).astype(int)
-dfProducts["product_description_length"] = dfProducts["product_description_length"].fillna(0).astype(int)
-dfProducts["product_photos_qty"] = dfProducts["product_photos_qty"].fillna(0).astype(int)
-dfOrders.dropna(subset=['order_approved_at', 'order_delivered_carrier_date', 'order_delivered_customer_date'], inplace=True)
-dfOrderReviews['review_comment_title'].fillna('No Title', inplace=True)
-dfOrderReviews['review_comment_message'].fillna('No Comment', inplace=True)
-dfProducts['product_category_name'].fillna('No Name', inplace=True)
-dfProducts['product_weight_g'].fillna(dfProducts['product_weight_g'].mean(), inplace=True)
-dfProducts['product_length_cm'].fillna(dfProducts['product_length_cm'].mean(), inplace=True)
-dfProducts['product_height_cm'].fillna(dfProducts['product_height_cm'].mean(), inplace=True)
-dfProducts['product_width_cm'].fillna(dfProducts['product_width_cm'].mean(), inplace=True)
-
-dfMergedOrderandProductsandReviews = pd.merge(dfOrderItems, dfProducts, how='inner', on='product_id')
-dfMergedOrderandProductsandReviews = pd.merge(dfMergedOrderandProductsandReviews, dfOrderReviews, how='inner', on='order_id')
-deliveryTime = dfOrders["order_delivered_customer_date"] - dfOrders["order_approved_at"]
-deliveryTime = deliveryTime.apply(lambda x: x.total_seconds())
-dfOrders["deliveryTime"] = round(deliveryTime / 86400)
-dfMergedOrderandReviews = dfOrders.merge(dfOrderReviews, on='order_id', how='left')
-dfMergedOrderandReviews = dfMergedOrderandReviews[(dfMergedOrderandReviews['deliveryTime'] >= 0) & (dfMergedOrderandReviews['deliveryTime'] <= 50)]
-dfMergedOrderandReviews = dfMergedOrderandReviews.dropna(subset=['deliveryTime', 'review_score'])
+# Importing csv to dataframe
+dfMergedOrderandProductsandReviews = pd.read_csv("dashboard/MergedOrderandProductsandReviews.csv", delimiter=",")
+dfOrderReviews = pd.read_csv("dashboard/OrderReviews.csv", delimiter=",")
+dfMergedOrderandReviews = pd.read_csv("dashboard/MergedOrderandReviews.csv", delimiter=",")
 # -------------
-
 
 st.title('Analisis Data: E-Commerce')
 st.markdown(

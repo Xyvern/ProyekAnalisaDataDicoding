@@ -7,8 +7,8 @@ pip install -r requirements.txt
 
 ## Setup Environment - Shell/Terminal
 ```
-mkdir proyek_analisis_data
-cd proyek_analisis_data
+mkdir proyekanalisadatadicoding
+cd proyekanalisadatadicoding
 pipenv install
 pipenv shell
 pip install -r requirements.txt
@@ -16,5 +16,5 @@ pip install -r requirements.txt
 
 ## Run steamlit app
 ```
-streamlit run streamlit.py
+streamlit run dashboard/streamlit.py
 ```
