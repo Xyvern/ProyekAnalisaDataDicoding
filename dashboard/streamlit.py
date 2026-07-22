@@ -3,90 +3,126 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import os
 
-# Importing csv to dataframe
-dfMergedOrderandProductsandReviews = pd.read_csv("dashboard/MergedOrderandProductsandReviews.csv", delimiter=",")
-dfOrderReviews = pd.read_csv("dashboard/OrderReviews.csv", delimiter=",")
-dfMergedOrderandReviews = pd.read_csv("dashboard/MergedOrderandReviews.csv", delimiter=",")
-# -------------
+# Set page config for a better layout
+st.set_page_config(page_title="E-Commerce Analytics", page_icon="🛍️", layout="wide")
 
-st.title('Analisis Data: E-Commerce')
-st.markdown(
-    """
-    Analisa ini bertujuan untuk menjawab: 
-    - Analisa hubungan antara kelengkapan data produk dengan kepuasan pelanggan
-    - Analisa hubungan waktu pengiriman dengan kepuasan pelanggan
-    """
-)
-st.header('Persebaran Rating secara keseluruhan')
-# Grafik keseluruhan
-review_counts = dfOrderReviews['review_score'].value_counts().sort_index()
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.bar(review_counts.index, review_counts.values, color='blue', alpha=0.7)
-ax.set_xlabel('Review Score')
-ax.set_ylabel('Number of Reviews')
+# Custom CSS for better aesthetics
+st.markdown("""
+<style>
+    .main {
+        background-color: #f8f9fa;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+@st.cache_data
+def load_data():
+    # Use relative pathing so it works anywhere
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    df = pd.read_csv(os.path.join(base_dir, "main_data.csv"))
+    return df
+
+df = load_data()
+
+st.title('🛍️ E-Commerce Data Analytics Dashboard')
+st.markdown("""
+Welcome to the E-Commerce Data Analytics Dashboard! This analysis aims to uncover key insights regarding customer satisfaction by answering two primary questions:
+1. **How does product data completeness (description length & number of photos) impact customer satisfaction?**
+2. **How does delivery time influence customer satisfaction?**
+""")
+
+# --- KPI Metrics Row ---
+st.markdown("### 📊 Key Metrics")
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.metric("Total Reviews Analyzed", f"{len(df):,}")
+with col2:
+    st.metric("Average Review Score", f"{df['review_score'].mean():.2f} ⭐")
+with col3:
+    st.metric("Average Delivery Time", f"{df['deliveryTime'].mean():.1f} Days")
+with col4:
+    st.metric("Avg Product Photos", f"{df['product_photos_qty'].mean():.1f}")
+
+st.divider()
+
+# --- Distribution of Reviews ---
+st.header('⭐ Overall Customer Satisfaction (Review Scores)')
+st.markdown("A quick look at the distribution of review scores across all orders.")
+
+review_counts = df['review_score'].value_counts().sort_index()
+
+fig, ax = plt.subplots(figsize=(8, 4))
+sns.barplot(x=review_counts.index, y=review_counts.values, hue=review_counts.index, palette="viridis", legend=False, ax=ax)
+ax.set_xlabel('Review Score', fontsize=12)
+ax.set_ylabel('Number of Reviews', fontsize=12)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 st.pyplot(fig)
 
-st.header('Persebaran Rating dengan pengaruh kelengkapan deskripsi produk dan jumlah foto')
-st.subheader("Persebaran Rating vs Kelengkapan Deskripsi")
-# Grafik Rating vs Kelengkapan Deskripsi
-fig, ax = plt.subplots(figsize=(10, 6))
-hb = ax.hist2d(
-    dfMergedOrderandProductsandReviews['product_description_length'], 
-    dfMergedOrderandProductsandReviews['review_score'], 
-    bins=50, 
-    cmap='Blues'
-)
-cb = plt.colorbar(hb[3], ax=ax)
-cb.set_label('Count')
-ax.set_xlabel('Product Description Length')
-ax.set_ylabel('Review Score')
-st.pyplot(fig)
+st.divider()
 
-st.subheader("Persebaran Rating vs Jumlah foto produk")
+# --- Question 1 Analysis ---
+st.header('📦 Impact of Product Data Completeness on Ratings')
+st.markdown("Does writing a longer product description or adding more photos lead to happier customers?")
 
-# Grafik Rating vs Jumlah foto produk
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.boxplot(data=dfMergedOrderandProductsandReviews, x='product_photos_qty', y='review_score', ax=ax)
-ax.set_title('Product Photos vs Review Score')
-ax.set_xlabel('Number of Photos')
-ax.set_ylabel('Review Score')
-st.pyplot(fig)
+col_q1_a, col_q1_b = st.columns(2)
 
-st.header('Persebaran Rating dengan pengaruh lama waktu pengiriman')
+with col_q1_a:
+    st.subheader("Description Length vs. Rating")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    hb = ax.hist2d(
+        df['product_description_length'], 
+        df['review_score'], 
+        bins=30, 
+        cmap='Blues'
+    )
+    cb = plt.colorbar(hb[3], ax=ax)
+    cb.set_label('Concentration of Reviews')
+    ax.set_xlabel('Product Description Length (Characters)')
+    ax.set_ylabel('Review Score')
+    st.pyplot(fig)
 
-fig, ax = plt.subplots(figsize=(10, 6))
-hist, xedges, yedges = np.histogram2d(
-    dfMergedOrderandReviews['deliveryTime'], 
-    dfMergedOrderandReviews['review_score'], 
-    bins=50
-)
-xpos, ypos = np.meshgrid(xedges[:-1], yedges[:-1], indexing="ij")
-xpos = xpos.ravel()
-ypos = ypos.ravel()
-zpos = hist.ravel()
+with col_q1_b:
+    st.subheader("Number of Photos vs. Rating")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.boxplot(data=df, x='product_photos_qty', y='review_score', hue='review_score', palette='Set3', legend=False, ax=ax)
+    ax.set_xlabel('Number of Photos')
+    ax.set_ylabel('Review Score')
+    st.pyplot(fig)
+
+st.info("💡 **Insight:** Highly-rated products (5-stars) typically feature descriptions around **500 characters** and utilize **2 to 8 photos**. More isn't always better; having a concise description and a reasonable amount of photos is the sweet spot.")
+
+st.divider()
+
+# --- Question 2 Analysis ---
+st.header('🚚 Delivery Time and Customer Satisfaction')
+st.markdown("How does the time it takes to deliver an order affect the customer's final rating?")
+
+fig, ax = plt.subplots(figsize=(10, 5))
 ax.hist2d(
-    dfMergedOrderandReviews['deliveryTime'], 
-    dfMergedOrderandReviews['review_score'], 
-    bins=50, 
-    cmap='Blues'
+    df['deliveryTime'], 
+    df['review_score'], 
+    bins=[30, 5], 
+    cmap='Oranges'
 )
 cbar = plt.colorbar(ax.collections[0], ax=ax)
-cbar.set_label('Count')
-ax.set_xlabel('Delivery Time in days')
+cbar.set_label('Concentration of Reviews')
+ax.set_xlabel('Delivery Time (Days)')
 ax.set_ylabel('Review Score')
+ax.set_yticks(range(1, 6))
 st.pyplot(fig)
 
+st.info("💡 **Insight:** There is a clear correlation between faster deliveries and higher ratings. Orders delivered in **under 25 days** have a significantly higher chance of receiving a 5-star rating.")
 
-st.markdown("""- Deskripsi produk yang memiliki rating bagus terkonsentrasi pada angka sekitar 500 huruf
-- Jumlah foto produk yang memiliki rating bagus berada pada angka 2 - 8
-- Waktu pengantaran barang dibawah 25 hari memiliki peluang yang lebih besar untuk mendapat rating 5 dari pelanggan"""
-)
+st.divider()
 
-st.header('Kesimpulan')
-st.markdown("""
-- Berdasarkan hasil analisa saya meyimpulkan bahwa kualitas barang yang baik tidak selalu memiliki deskripsi yang panjang dan jumlah foto yang banyak tetapi memiliki jumlah yang ideal yaitu tidak lebih dari 500 huruf untuk deskripsi dan 2-8 foto. Kepuasan pelanggan memiliki korelasi dengan kualitas barang, semakin berkualitas barangnya semakin bagus rating yang diberikan.
-- Berdasarkan hasil analisa saya meyimpulkan bahwa lama waktu pengantaran bukan satu-satunya faktor kepuasann pelanggan, tetapi waktu pengantaran dibawah 25 hari memiliki peluang yang lebih besar untuk mendapatkan rating 5. Kepuasan pelanggan memiliki korelasi dengan waktu pengantaran."""
-)
+# --- Conclusion ---
+st.header('🎯 Final Conclusions')
+st.success("""
+- **Product Presentation Matters, but Balance is Key:** Good product quality doesn't necessarily require excessively long descriptions or dozens of photos. An optimal presentation (around 500 characters and 2-8 photos) correlates strongly with high customer satisfaction.
+- **Speed is Crucial for Satisfaction:** While not the *only* factor, delivery time heavily impacts the review score. Keeping delivery times under 25 days is critical for maximizing 5-star reviews.
+""")
 
-st.caption('Copyright (c) 2024 Darren Cahya Wijaya')
+st.caption('© 2024 Darren Cahya Wijaya | Data Analytics Project')
